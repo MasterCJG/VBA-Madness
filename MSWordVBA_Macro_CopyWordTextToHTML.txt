@@ -1,0 +1,109 @@
+Sub GenerateHTMLFiles()
+    Dim folder, file, lyricsFolder As String
+    Dim fileNumber As Integer
+    Dim sectionString, sectionTitle, HTMLPreText, HTMLPostText, stringLink, headString As String
+    Dim numberOfSections As Integer
+    Dim sectionCounter As Integer
+    Dim htmlMasterFile As String
+     
+    'Initialization parameters
+    folder = CUsersChrisGoogle DriveBandCJG LyricsHTML Files
+    file = test
+    extension = .html
+    
+    'Get the count for the number of sections in the document
+    numberOfSections = ActiveDocument.Sections.Count
+    
+    'Go to beginning of document and select first section
+    Selection.HomeKey unit=wdStory, Extend=wdExtend
+    Selection.Expand unit=wdSection
+    sectionString = Selection.Text
+
+    'HTML text before and after text
+    HTMLPreText = HTML  & Chr$(10) & BODY & Chr$(10)
+    HTMLPostText = Chr$(10) & BODY  & Chr$(10) & HTML & Chr$(10)
+    headString = head  & Chr$(13) & _
+                meta charset= &  & utf-8 &  &  & Chr$(13) & _
+                meta http-equiv= &  & X-UA-Compatible &  & content= &  & IE=edge,chrome=1 &  &  & Chr$(13) & _
+                titleMasterCJGtitle & Chr$(13) & _
+                link href= &  & layout-styles.css &  & rel= &  & stylesheet &  & type= &  & textcss &  & media= &  & screen &  &  & Chr$(13) & _
+                head
+
+    ' Loop through sections
+    htmlMasterFile = 
+    For sectionCounter = 1 To (numberOfSections - 1)
+        fileNumber = FreeFile()     ' gets next file #
+        
+        ' Use first line of section as title of file
+        Selection.Sentences(1).Select
+        sectionTitle = Selection.Text
+        stringlength = Len(sectionTitle)
+        sectionTitle = Left(sectionTitle, (stringlength - 2))  ' decrement removees the line feed
+        file = sectionTitle
+        
+        ' Get string ready to be placed in file
+        sectionString = HTMLPreText & headString & sectionString & HTMLPostText
+        
+        ' Open, write, and close file
+        Open folder & lyrics & sectionCounter &   & file & extension For Output As #fileNumber
+        Print #fileNumber, sectionString
+        Close #fileNumber
+
+        ' Call function to go to next sectio and return text as a string formatted line-by-line for HTML output
+        sectionString = SelectNextSection
+        
+        
+        ' Build up master file link by linke
+        stringLink = ' & folder & lyrics & sectionCounter &   & file & extension & '
+        htmlMasterFile = htmlMasterFile & a href= &  & stringLink &  &  & sectionTitle & abr & Chr$(10)
+        
+    Next
+    
+    ' Write out Master HTML file that contains links to other output HTML files
+    fileNumber = FreeFile()     ' gets next file #
+    Open folder & MasterFile.html For Output As #fileNumber
+    Print #fileNumber, HTMLPreText & htmlMasterFile & HTMLPostText
+    Close #fileNumber
+End Sub
+
+Private Function SelectNextSection() As String
+    Dim sectionString As String
+    Dim sentenceString As String
+    Dim HTMLPreText, HTMLPostText, headString As String
+    
+    Dim sects As Sections
+    Dim sect As Section
+    Dim paras As Paragraphs
+    Dim para As Paragraph
+    Dim sents As Sentences
+    Dim sent As Range
+    
+    HTMLPreText =  font face=  &  & courier new &  & 
+    HTMLPostText =  & font br & Chr$(10)
+    
+    ' Select all text ina section and store in section string
+    Selection.GoToNext wdGoToSection  ' Move selection to next section
+    Selection.Expand unit=wdSection  ' expand from current selection to end of section
+    sectionString = Selection.Text    ' Save selected section
+    
+    
+    ' Loop through all selected section text in a paragraph
+    '  then loop through all sentences in a paragraph
+    Set paras = Selection.Paragraphs
+    sentenceString = 
+    For Each para In paras
+        Set sents = para.Range.Sentences ' can use Range property to get to text of an object
+        For Each sent In sents
+            sentenceString = sentenceString & _
+                            HTMLPreText & _
+                            sent.Text & _
+                            HTMLPostText & _
+                            Chr$(10)
+        Next
+    Next
+    
+    ' Return string value
+    SelectNextSection = sentenceString
+    
+End Function
+
